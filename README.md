@@ -5,21 +5,21 @@
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-emerald.svg)](file:///)
 [![Test Suite](https://img.shields.io/badge/Tests-15%20Passed-brightgreen.svg)](file:///)
 
-A software simulation engine and interactive web application for a **Parallel-In Parallel-Out (PIPO) Data Buffer**, developed for the **EC2201 Digital Systems** syllabus. The project models hardware D-flip-flops, clocking, timing constraints ($t_{su}, t_h, t_{pd}$), tri-state buffers, multi-stage FIFO queues, AI fault detection, automated testing, and interactive waveform visualization.
+A software simulation engine and interactive web application for a **Parallel-In Parallel-Out (PIPO) Data Buffer**, developed for the **EC2201 Digital Systems** syllabus. The project models hardware D-flip-flops, clocking, timing constraints (`t_su`, `t_h`, `t_pd`), tri-state buffers, multi-stage FIFO queues, AI fault detection, automated testing, and interactive waveform visualization.
 
 ---
 
 ## 1. Assumptions & Input Format
 
 ### Assumptions
-1. **Clock Triggering:** D Flip-Flops sample input data on the rising edge of the system clock signal ($CLK: 0 \rightarrow 1$).
-2. **Setup & Hold Constraints:** Default setup time $t_{su} = 1.0\text{ ns}$, hold time $t_h = 0.5\text{ ns}$, propagation delay $t_{pd} = 2.0\text{ ns}$.
-3. **Reset Priority:** Asynchronous Active-Low Reset ($RST\_N = 0$) immediately overrides clock pulses and clears all flip-flop outputs $Q[N-1:0] \rightarrow 0$.
-4. **Tri-state Buffer:** Output Enable ($OE = 0$) disconnects output lines, placing the output bus into High Impedance ($Hi\text{-}Z$).
-5. **Configurable Width:** Supports $N \in \{4, 8, 16, 32\}$ parallel bit width registers.
+1. **Clock Triggering:** D Flip-Flops sample input data on the rising edge of the system clock signal (`CLK: 0 -> 1`).
+2. **Setup & Hold Constraints:** Default setup time `t_su = 1.0 ns`, hold time `t_h = 0.5 ns`, propagation delay `t_pd = 2.0 ns`.
+3. **Reset Priority:** Asynchronous Active-Low Reset (`RST_N = 0`) immediately overrides clock pulses and clears all flip-flop outputs `Q[N-1:0] -> 0`.
+4. **Tri-state Buffer:** Output Enable (`OE = 0`) disconnects output lines, placing the output bus into High Impedance (`Hi-Z`).
+5. **Configurable Width:** Supports `N` in `{4, 8, 16, 32}` parallel bit width registers.
 
 ### Input Data Formats
-- **Parallel Data Bus $D[N-1:0]$:** List of boolean/integer bits `[D_0, D_1, ..., D_{N-1}]` or hexadecimal integer values (e.g. `0xA5`).
+- **Parallel Data Bus `D[N-1:0]`:** List of boolean/integer bits `[D_0, D_1, ..., D_{N-1}]` or hexadecimal integer values (e.g. `0xA5`).
 - **Control Pins:** `CLK` (0 or 1), `LOAD` (0 or 1), `RST_N` (0 or 1), `OE` (0 or 1).
 - **Synthetic CSV Traffic:** Columns: `cycle`, `write_word`, `write_enable`, `read_enable`, `clk_freq_mhz`, `setup_time_ps`, `hold_time_ps`, `temp_c`, `fault_type`, `is_anomaly`.
 
