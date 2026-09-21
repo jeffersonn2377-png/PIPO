@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIPO Data Buffer Simulator | EC2201 Digital Systems</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="static/style.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
+
+    <!-- Header / Navbar -->
+    <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex flex-wrap justify-between items-center shadow-lg">
+        <div class="flex items-center space-x-3">
+            <div class="bg-cyan-500/10 p-2.5 rounded-lg border border-cyan-500/30 text-cyan-400">
+                <i class="fa-solid fa-microchip text-2xl"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight text-white flex items-center space-x-2">
+                    <span>PIPO Data Buffer Simulator</span>
+                    <span class="text-xs px-2.5 py-0.5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-800 font-mono">GitHub Pages Live</span>
+                </h1>
+                <p class="text-xs text-slate-400">Parallel-In Parallel-Out Register & Multi-Stage Buffer Simulation Engine</p>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav class="flex space-x-2 bg-slate-950 p-1.5 rounded-xl border border-slate-800 mt-4 md:mt-0">
+            <button class="nav-tab active" data-tab="simulator"><i class="fa-solid fa-sliders mr-2"></i>Simulator</button>
+            <button class="nav-tab" data-tab="waveforms"><i class="fa-solid fa-wave-square mr-2"></i>Waveforms</button>
+            <button class="nav-tab" data-tab="test-suite"><i class="fa-solid fa-vial-circle-check mr-2"></i>Test Suite</button>
+            <button class="nav-tab" data-tab="ai-analytics"><i class="fa-solid fa-brain mr-2"></i>AI Analytics</button>
+            <button class="nav-tab" data-tab="deliverables"><i class="fa-solid fa-file-lines mr-2"></i>Deliverables</button>
+        </nav>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
+
+        <!-- TAB 1: INTERACTIVE SIMULATOR -->
+        <div id="simulator" class="tab-content space-y-6">
+            
+            <!-- Controls & Configuration Bar -->
+            <div class="glass-card p-5 space-y-4">
+                <div class="flex flex-wrap justify-between items-center gap-4">
+                    <div class="flex items-center space-x-4">
+                        <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Bit Width:</label>
+                        <select id="bitWidthSelect" class="bg-slate-900 border border-slate-700 text-cyan-400 font-mono text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-cyan-500">
+                            <option value="4">4-Bit Register</option>
+                            <option value="8" selected>8-Bit Register</option>
+                            <option value="16">16-Bit Register</option>
+                            <option value="32">32-Bit Register</option>
+                        </select>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2">
+                        <button id="btnClockStep" class="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg shadow-lg shadow-emerald-500/20 transition flex items-center">
+                            <i class="fa-solid fa-bolt mr-2"></i> CLK Pulse (Rising Edge)
+                        </button>
+                        <button id="btnToggleReset" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg font-semibold border border-slate-700 text-xs">
+                            RESET (RST_N = 1)
+                        </button>
+                        <button id="btnToggleLoad" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg font-semibold text-xs">
+                            LOAD ENABLE (LOAD = 1)
+                        </button>
+                        <button id="btnToggleOE" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-semibold text-xs">
+                            OUTPUT ENABLE (OE = 1)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Bit Input Bus Toggles -->
+                <div class="border-t border-slate-800 pt-3 flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xs text-slate-400 font-mono uppercase">Parallel Data Input D[N-1:0]:</span>
+                        <span id="hexInputDisplay" class="font-mono text-sm font-bold text-cyan-400 bg-slate-900 px-2 py-1 rounded border border-slate-800">0x00</span>
+                    </div>
+                    <div id="bitButtonsContainer" class="flex flex-wrap gap-1.5"></div>
+                </div>
+            </div>
+
+            <!-- Circuit Visualizer & Flip-Flop Array -->
+            <div class="glass-card p-6 space-y-4">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-base font-bold text-slate-200 flex items-center">
+                        <i class="fa-solid fa-microchip text-cyan-400 mr-2"></i> PIPO Flip-Flop Register Array
+                    </h2>
+                    <div class="flex items-center space-x-3 text-xs font-mono">
+                        <span class="text-slate-400">Parallel Output Bus Q:</span>
+                        <span id="outputHexDisplay" class="text-base font-bold text-emerald-400 bg-slate-900 px-3 py-1 rounded border border-emerald-500/30">0x00</span>
+                    </div>
+                </div>
+
+                <div id="circuitGridContainer" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3"></div>
+            </div>
+
+            <!-- Multi-Stage PIPO Buffer Pipeline Section -->
+            <div class="glass-card p-6 space-y-4">
+                <div class="flex flex-wrap justify-between items-center gap-4">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-200 flex items-center">
+                            <i class="fa-solid fa-layer-group text-indigo-400 mr-2"></i> Multi-Stage PIPO Data Buffer Pipeline
+                        </h2>
+                        <p class="text-xs text-slate-400">Cascaded parallel registers forming a FIFO buffer queue with throughput metrics.</p>
+                    </div>
+
+                    <div class="flex items-center space-x-2">
+                        <input id="bufWriteValue" type="number" min="0" max="255" value="165" class="w-20 bg-slate-900 border border-slate-700 text-cyan-400 text-xs font-mono rounded px-2.5 py-1.5 text-center">
+                        <button id="btnBufWrite" class="px-3.5 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded text-xs font-semibold">Write Word</button>
+                        <button id="btnBufRead" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs font-semibold">Read Word</button>
+                        <button id="btnBufReset" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs font-semibold">Reset Buffer</button>
+                    </div>
+                </div>
+
+                <!-- Performance Metrics Bar -->
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-2">
+                    <div class="bg-slate-900/80 p-3 rounded-lg border border-slate-800 text-center">
+                        <div class="text-[10px] text-slate-500 font-bold uppercase">Throughput</div>
+                        <div id="statThroughput" class="text-sm font-mono font-bold text-cyan-400">0.0 W/cycle</div>
+                    </div>
+                    <div class="bg-slate-900/80 p-3 rounded-lg border border-slate-800 text-center">
+                        <div class="text-[10px] text-slate-500 font-bold uppercase">Bandwidth @ 100MHz</div>
+                        <div id="statBandwidth" class="text-sm font-mono font-bold text-emerald-400">0.0 Mbps</div>
+                    </div>
+                    <div class="bg-slate-900/80 p-3 rounded-lg border border-slate-800 text-center">
+                        <div class="text-[10px] text-slate-500 font-bold uppercase">Efficiency</div>
+                        <div id="statEfficiency" class="text-sm font-mono font-bold text-indigo-400">0.0%</div>
+                    </div>
+                    <div class="bg-slate-900/80 p-3 rounded-lg border border-slate-800 text-center">
+                        <div class="text-[10px] text-slate-500 font-bold uppercase">Avg Latency</div>
+                        <div id="statLatency" class="text-sm font-mono font-bold text-amber-400">0.0 cycles</div>
+                    </div>
+                    <div class="bg-slate-900/80 p-3 rounded-lg border border-slate-800 text-center">
+                        <div class="text-[10px] text-slate-500 font-bold uppercase">Occupancy</div>
+                        <div id="statOccupancy" class="text-sm font-mono font-bold text-slate-300">0 / 8</div>
+                    </div>
+                </div>
+
+                <!-- Pipeline Stages Display -->
+                <div id="bufferSlotsContainer" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3 pt-2"></div>
+                <div id="bufferStatusLog" class="text-xs font-mono text-slate-400 bg-slate-900 px-3 py-2 rounded border border-slate-800">Status: Buffer Ready</div>
+            </div>
+
+        </div>
+
+        <!-- TAB 2: SIGNAL WAVEFORMS -->
+        <div id="waveforms" class="tab-content hidden space-y-6">
+            <div class="glass-card p-6 space-y-4">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-200 flex items-center">
+                            <i class="fa-solid fa-wave-square text-cyan-400 mr-2"></i> Real-Time Signal Timing Diagram
+                        </h2>
+                        <p class="text-xs text-slate-400">Simulated logic analyzer rendering CLK, LOAD, RST_N, D_BUS, and Q_BUS waveforms.</p>
+                    </div>
+                </div>
+
+                <div class="relative w-full">
+                    <canvas id="waveformCanvas"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: TEST SUITE & TRUTH TABLE -->
+        <div id="test-suite" class="tab-content hidden space-y-6">
+            
+            <!-- Automated Test Suite Header -->
+            <div class="glass-card p-6 space-y-4">
+                <div class="flex flex-wrap justify-between items-center gap-4">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-200 flex items-center">
+                            <i class="fa-solid fa-vial-circle-check text-emerald-400 mr-2"></i> Automated Test Case Suite (15 Test Cases)
+                        </h2>
+                        <p class="text-xs text-slate-400">Contains 10 Normal test cases and 5 Edge/Fault test cases with explicit verification assertions.</p>
+                    </div>
+
+                    <div class="flex items-center space-x-3">
+                        <span id="testSummaryCount" class="text-xs font-mono font-bold text-emerald-400 bg-emerald-950/80 px-3 py-1.5 rounded border border-emerald-700">0 / 15 PASSED</span>
+                        <button id="btnRunTests" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg text-xs transition">
+                            Run All 15 Test Cases
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Test Cases Table -->
+                <div class="overflow-x-auto rounded-lg border border-slate-800">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-900 text-slate-400 font-mono text-[11px] uppercase border-b border-slate-800">
+                            <tr>
+                                <th class="px-4 py-3">ID</th>
+                                <th class="px-4 py-3">Test Name</th>
+                                <th class="px-4 py-3">Category</th>
+                                <th class="px-4 py-3">Status</th>
+                                <th class="px-4 py-3">Truth Table Op</th>
+                                <th class="px-4 py-3">Verification Details</th>
+                            </tr>
+                        </thead>
+                        <tbody id="testResultsBody">
+                            <tr>
+                                <td colspan="6" class="px-4 py-6 text-center text-xs text-slate-500">Click "Run All 15 Test Cases" to execute verification tests.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Hardware Truth Table Section -->
+            <div class="glass-card p-6 space-y-4">
+                <h2 class="text-base font-bold text-slate-200 flex items-center">
+                    <i class="fa-solid fa-table text-indigo-400 mr-2"></i> PIPO Register Hardware Truth Table
+                </h2>
+                <div class="overflow-x-auto rounded-lg border border-slate-800">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-900 text-slate-400 font-mono text-[11px] uppercase border-b border-slate-800">
+                            <tr>
+                                <th class="px-3 py-2">CLK</th>
+                                <th class="px-3 py-2">RST_N</th>
+                                <th class="px-3 py-2">LOAD</th>
+                                <th class="px-3 py-2">OE</th>
+                                <th class="px-3 py-2">D_In</th>
+                                <th class="px-3 py-2">Q(t+1)</th>
+                                <th class="px-3 py-2">Output Bus</th>
+                                <th class="px-3 py-2">Operation</th>
+                            </tr>
+                        </thead>
+                        <tbody id="truthTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- TAB 4: AI & ANALYTICS -->
+        <div id="ai-analytics" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                <!-- AI Traffic & Setup Time Chart -->
+                <div class="md:col-span-2 glass-card p-6 space-y-4">
+                    <h2 class="text-base font-bold text-slate-200 flex items-center">
+                        <i class="fa-solid fa-chart-line text-cyan-400 mr-2"></i> Synthetic Data Traffic & Anomaly Detection
+                    </h2>
+                    <div class="h-64 relative">
+                        <canvas id="aiChartCanvas"></canvas>
+                    </div>
+                </div>
+
+                <!-- AI Model Metrics & Fault Playground -->
+                <div class="glass-card p-6 space-y-4 flex flex-col justify-between">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-200 flex items-center mb-3">
+                            <i class="fa-solid fa-shield-cat text-amber-400 mr-2"></i> Fault Detector Classifier
+                        </h2>
+                        <div id="aiMetricsBox" class="p-3 bg-slate-900 rounded border border-slate-800">Loading AI model metrics...</div>
+                    </div>
+
+                    <!-- Live Fault Playground -->
+                    <div class="border-t border-slate-800 pt-4 space-y-3">
+                        <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Live Timing Violation Tester</h3>
+                        <div class="grid grid-cols-2 gap-2 text-xs font-mono">
+                            <div>
+                                <label class="text-slate-400">Setup Time (ps):</label>
+                                <input id="aiSetupPs" type="number" value="250" class="w-full bg-slate-900 border border-slate-700 text-cyan-400 rounded px-2 py-1 mt-1">
+                            </div>
+                            <div>
+                                <label class="text-slate-400">Hold Time (ps):</label>
+                                <input id="aiHoldPs" type="number" value="500" class="w-full bg-slate-900 border border-slate-700 text-cyan-400 rounded px-2 py-1 mt-1">
+                            </div>
+                        </div>
+                        <button id="btnPredictFault" class="w-full py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded transition">
+                            Evaluate Timing Fault
+                        </button>
+                        <div id="aiPredictResult" class="p-3 rounded border text-xs font-mono bg-slate-900 border-slate-800 text-slate-400">Ready for evaluation.</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- TAB 5: STUDENT DELIVERABLES & REPORT -->
+        <div id="deliverables" class="tab-content hidden space-y-6">
+            
+            <!-- Quick Downloads Header -->
+            <div class="glass-card p-6 flex flex-wrap justify-between items-center gap-4">
+                <div>
+                    <h2 class="text-base font-bold text-slate-200 flex items-center">
+                        <i class="fa-solid fa-download text-emerald-400 mr-2"></i> Student Deliverables & Submission Files
+                    </h2>
+                    <p class="text-xs text-slate-400">Download reproducible datasets, project report, Jupyter notebook, and video demo script.</p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <button id="btnDownloadNormalCSV" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-cyan-400 rounded-lg text-xs font-semibold border border-slate-700 flex items-center">
+                        <i class="fa-solid fa-file-csv mr-1.5"></i> Normal Dataset (CSV)
+                    </button>
+                    <button id="btnDownloadFaultCSV" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-lg text-xs font-semibold border border-slate-700 flex items-center">
+                        <i class="fa-solid fa-file-csv mr-1.5"></i> Fault Dataset (CSV)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Report & Demo Script Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- Short Project Report -->
+                <div class="glass-card p-6 space-y-4">
+                    <h3 class="text-sm font-bold text-slate-200 flex items-center border-b border-slate-800 pb-2">
+                        <i class="fa-solid fa-book-bookmark text-indigo-400 mr-2"></i> Short Project Report Preview
+                    </h3>
+                    <div class="text-xs text-slate-300 space-y-3 font-sans leading-relaxed max-h-96 overflow-y-auto pr-2">
+                        <h4 class="font-bold text-cyan-400">1. Executive Summary</h4>
+                        <p>This project presents a hardware-accurate software simulator of a Parallel-In Parallel-Out (PIPO) Data Buffer, fulfilling the requirements for EC2201 Digital Systems. The solution simulates N-bit D-flip-flop register operations, timing constraints (setup/hold time, propagation delay), tri-state outputs, and multi-stage FIFO buffer throughput.</p>
+
+                        <h4 class="font-bold text-cyan-400">2. Digital System Architecture</h4>
+                        <p>The core PIPO register consists of N positive edge-triggered D flip-flops sharing a common clock (CLK), clock enable (LOAD), and asynchronous active-low reset (RST_N). Parallel input words D[N-1:0] are sampled on the rising clock edge and output simultaneously as Q[N-1:0].</p>
+
+                        <h4 class="font-bold text-cyan-400">3. AI & Data Analytics Layer</h4>
+                        <p>An IsolationForest model detects timing anomalies ($t_{su} < 1.0\text{ ns}$) and bit flips. Performance analysis demonstrates max bandwidth of $800\text{ Mbps}$ at $100\text{ MHz}$ for 8-bit registers.</p>
+                    </div>
+                </div>
+
+                <!-- 3-5 Minute Video Demo Script -->
+                <div class="glass-card p-6 space-y-4">
+                    <h3 class="text-sm font-bold text-slate-200 flex items-center border-b border-slate-800 pb-2">
+                        <i class="fa-solid fa-video text-rose-400 mr-2"></i> 3–5 Minute Video Demo Script
+                    </h3>
+                    <div class="text-xs text-slate-300 space-y-3 font-sans leading-relaxed max-h-96 overflow-y-auto pr-2">
+                        <div class="p-2.5 bg-slate-900 rounded border border-slate-800">
+                            <span class="font-mono text-cyan-400 font-bold">[0:00 - 0:45] Intro & Concept</span>
+                            <p class="mt-1">"Welcome! Today we present the PIPO Data Buffer Simulator for EC2201 Digital Systems. PIPO registers load all input bits simultaneously on a single clock pulse..."</p>
+                        </div>
+                        <div class="p-2.5 bg-slate-900 rounded border border-slate-800">
+                            <span class="font-mono text-emerald-400 font-bold">[0:45 - 2:00] Circuit Demo & Waveforms</span>
+                            <p class="mt-1">"Here in the interactive simulator, we set D=0x55, pulse CLK, and observe all 8 flip-flops updating instantly on the waveform display..."</p>
+                        </div>
+                        <div class="p-2.5 bg-slate-900 rounded border border-slate-800">
+                            <span class="font-mono text-amber-400 font-bold">[2:00 - 3:30] Test Suite & AI Anomaly Detection</span>
+                            <p class="mt-1">"We execute our 15 test cases (10 normal + 5 edge fault cases) and inspect AI detection for setup time violations..."</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 border-t border-slate-800 px-6 py-4 text-center text-xs text-slate-500 font-mono">
+        PIPO Data Buffer Simulator | EC2201 Digital Systems Syllabus | GitHub Pages Hosted
+    </footer>
+
+    <!-- Custom App JavaScript -->
+    <script src="static/app.js"></script>
+</body>
+</html>
