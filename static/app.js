@@ -242,6 +242,7 @@ let regInstanceJS = new PIPORegisterJS(8);
 let bufInstanceJS = new PIPODataBufferJS(8, 8, 100.0);
 
 document.addEventListener("DOMContentLoaded", () => {
+    initDefaultWaveformHistory();
     initTabs();
     initBitWidthSelector();
     initPinControls();
@@ -251,6 +252,26 @@ document.addEventListener("DOMContentLoaded", () => {
     initAICounts();
     initDeliverablesCSV();
 });
+
+window.addEventListener("resize", () => {
+    renderWaveforms();
+});
+
+function initDefaultWaveformHistory() {
+    if (waveformHistory.length > 0) return;
+    const sampleWords = [0x55, 0x55, 0xA5, 0xA5, 0xFF, 0xFF, 0x00, 0x00, 0x33, 0x33, 0xC6, 0xC6];
+    sampleWords.forEach((val, i) => {
+        waveformHistory.push({
+            clk: i % 2,
+            load: (i >= 8 && i <= 9) ? 0 : 1,
+            reset_n: (i >= 6 && i <= 7) ? 0 : 1,
+            oe: 1,
+            d_int: val,
+            q_int: i < 2 ? 0x00 : ((i >= 6 && i <= 7) ? 0x00 : val),
+            q_bus: i < 2 ? null : [1, 0, 1, 0, 0, 1, 0, 1]
+        });
+    });
+}
 
 // Tab Navigation
 function initTabs() {
@@ -268,6 +289,8 @@ function initTabs() {
 
             if (targetId === "ai-analytics") {
                 loadAITraffic();
+            } else if (targetId === "waveforms") {
+                setTimeout(renderWaveforms, 50);
             }
         });
     });
@@ -457,18 +480,24 @@ function renderWaveforms() {
     const canvas = document.getElementById("waveformCanvas");
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
-    const width = canvas.width = canvas.parentElement.clientWidth;
-    const height = canvas.height = 220;
+
+    let parentW = canvas.parentElement ? canvas.parentElement.clientWidth : 0;
+    if (parentW <= 0) {
+        parentW = document.getElementById("waveforms") ? document.getElementById("waveforms").clientWidth : 0;
+    }
+    if (parentW <= 0) {
+        parentW = Math.max(320, window.innerWidth - 60);
+    }
+
+    const width = canvas.width = Math.max(parentW, 500);
+    const height = canvas.height = 240;
 
     ctx.clearRect(0, 0, width, height);
     ctx.fillStyle = "#020617";
     ctx.fillRect(0, 0, width, height);
 
     if (waveformHistory.length === 0) {
-        ctx.fillStyle = "#64748b";
-        ctx.font = "14px Inter";
-        ctx.fillText("Clock the register to view live signal waveforms...", 20, 110);
-        return;
+        initDefaultWaveformHistory();
     }
 
     const signals = [
@@ -479,8 +508,25 @@ function renderWaveforms() {
         { name: "Q_BUS", key: "q_int", color: "#eab308", type: "bus" }
     ];
 
-    const stepWidth = Math.max(25, width / Math.max(30, waveformHistory.length));
-    const rowHeight = height / signals.length;
+    const labelMargin = 75;
+    const drawWidth = width - labelMargin - 20;
+    const stepWidth = Math.max(25, drawWidth / Math.max(12, waveformHistory.length));
+    const rowHeight = (height - 25) / signals.length;
+
+    // Grid lines & Time cycle ticks (T1, T2...)
+    ctx.strokeStyle = "#1e293b";
+    ctx.lineWidth = 1;
+    waveformHistory.forEach((_, pIdx) => {
+        const x = labelMargin + pIdx * stepWidth;
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height - 20);
+        ctx.stroke();
+
+        ctx.fillStyle = "#64748b";
+        ctx.font = "10px Fira Code";
+        ctx.fillText(`T${pIdx + 1}`, x + 4, height - 6);
+    });
 
     signals.forEach((sig, sIdx) => {
         const yBase = sIdx * rowHeight + rowHeight * 0.75;
@@ -495,7 +541,7 @@ function renderWaveforms() {
         ctx.beginPath();
 
         waveformHistory.forEach((pt, pIdx) => {
-            const x = 70 + pIdx * stepWidth;
+            const x = labelMargin + pIdx * stepWidth;
             const val = pt[sig.key];
 
             if (sig.type === "digital") {
@@ -509,10 +555,10 @@ function renderWaveforms() {
                 }
                 ctx.lineTo(x + stepWidth, y);
             } else {
-                ctx.fillStyle = "rgba(255,255,255,0.05)";
-                ctx.fillRect(x, yHigh, stepWidth - 2, rowHeight * 0.5);
+                ctx.fillStyle = "rgba(255,255,255,0.06)";
+                ctx.fillRect(x, yHigh, stepWidth - 2, rowHeight * 0.55);
                 ctx.strokeStyle = sig.color;
-                ctx.strokeRect(x, yHigh, stepWidth - 2, rowHeight * 0.5);
+                ctx.strokeRect(x, yHigh, stepWidth - 2, rowHeight * 0.55);
                 
                 ctx.fillStyle = "#f8fafc";
                 ctx.font = "10px Fira Code";
